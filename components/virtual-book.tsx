@@ -26,37 +26,81 @@ export default function VirtualBook() {
   // Load external libraries with better error handling
   const loadLibraries = useCallback(async () => {
     try {
-      // Load jQuery first
+      // Load jQuery first from multiple CDN sources
       if (!window.jQuery) {
         await new Promise<void>((resolve, reject) => {
           const script = document.createElement("script");
           script.src =
-            "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js";
+            "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js";
+          script.crossOrigin = "anonymous";
           script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load jQuery"));
+          script.onerror = () => {
+            // Try backup CDN
+            const backupScript = document.createElement("script");
+            backupScript.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+            backupScript.crossOrigin = "anonymous";
+            backupScript.onload = () => resolve();
+            backupScript.onerror = () =>
+              reject(new Error("Failed to load jQuery"));
+            document.head.appendChild(backupScript);
+          };
           document.head.appendChild(script);
         });
       }
 
-      // Wait a bit for jQuery to be available
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for jQuery to be available
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
-      // Load turn.js from a reliable CDN
+      // Load turn.js from multiple CDN sources
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
         script.src =
-          "https://raw.githack.com/blasten/turn.js/master/turn.min.js";
+          "https://cdn.jsdelivr.net/gh/blasten/turn.js@master/turn.min.js";
+        script.crossOrigin = "anonymous";
         script.onload = () => {
-          // Wait for turn.js to attach to jQuery
           setTimeout(() => {
             if (window.jQuery && window.jQuery.fn.turn) {
               resolve();
             } else {
-              reject(new Error("turn.js did not attach properly"));
+              // Try backup CDN
+              const backupScript = document.createElement("script");
+              backupScript.src =
+                "https://raw.githack.com/blasten/turn.js/master/turn.min.js";
+              backupScript.crossOrigin = "anonymous";
+              backupScript.onload = () => {
+                setTimeout(() => {
+                  if (window.jQuery && window.jQuery.fn.turn) {
+                    resolve();
+                  } else {
+                    reject(new Error("turn.js did not attach properly"));
+                  }
+                }, 200);
+              };
+              backupScript.onerror = () =>
+                reject(new Error("Failed to load turn.js"));
+              document.head.appendChild(backupScript);
             }
-          }, 100);
+          }, 200);
         };
-        script.onerror = () => reject(new Error("Failed to load turn.js"));
+        script.onerror = () => {
+          // Try backup CDN immediately
+          const backupScript = document.createElement("script");
+          backupScript.src =
+            "https://raw.githack.com/blasten/turn.js/master/turn.min.js";
+          backupScript.crossOrigin = "anonymous";
+          backupScript.onload = () => {
+            setTimeout(() => {
+              if (window.jQuery && window.jQuery.fn.turn) {
+                resolve();
+              } else {
+                reject(new Error("turn.js did not attach properly"));
+              }
+            }, 200);
+          };
+          backupScript.onerror = () =>
+            reject(new Error("Failed to load turn.js"));
+          document.head.appendChild(backupScript);
+        };
         document.head.appendChild(script);
       });
 
