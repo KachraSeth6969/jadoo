@@ -19,7 +19,7 @@ export default function VirtualBook() {
   const bookRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0); // Will be calculated dynamically
+  const [totalPages, setTotalPages] = useState(bookPages.length + 2); // +2 for covers
   const [isFlipping, setIsFlipping] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -89,50 +89,32 @@ export default function VirtualBook() {
         $(bookRef.current).turn("destroy");
       }
 
-      // Wait for DOM to be ready and pages to be rendered
-      setTimeout(() => {
-        if (!bookRef.current) return;
-
-        // Count actual pages in the DOM
-        const pages = $(bookRef.current).find('.page');
-        const actualPageCount = pages.length;
-
-        if (actualPageCount === 0) {
-          console.warn("No pages found in DOM, retrying initialization...");
-          setTimeout(() => initializeBook(), 500);
-          return;
-        }
-
-        console.log(`Initializing book with ${actualPageCount} pages`);
-        setTotalPages(actualPageCount);
-
-        // Initialize turn.js with realistic settings
-        $(bookRef.current).turn({
-          width: 800,
-          height: 600,
-          autoCenter: true,
-          gradients: true,
-          elevation: 50,
-          duration: 1000,
-          acceleration: true,
-          display: "double",
-          when: {
-            turning: (event: any, page: number, view: any) => {
-              setIsFlipping(true);
-            },
-            turned: (event: any, page: number, view: any) => {
-              setCurrentPage(page);
-              setIsFlipping(false);
-            },
-            start: function (event: any, pageObject: any, corner: any) {
-              $(this).addClass("turning");
-            },
-            end: function (event: any, pageObject: any, turned: boolean) {
-              $(this).removeClass("turning");
-            },
+      // Initialize turn.js with realistic settings
+      $(bookRef.current).turn({
+        width: 1200,
+        height: 900,
+        autoCenter: true,
+        gradients: true,
+        elevation: 50,
+        duration: 1000,
+        acceleration: true,
+        display: "double",
+        when: {
+          turning: (event: any, page: number, view: any) => {
+            setIsFlipping(true);
           },
-        });
-      }, 100);
+          turned: (event: any, page: number, view: any) => {
+            setCurrentPage(page);
+            setIsFlipping(false);
+          },
+          start: function (event: any, pageObject: any, corner: any) {
+            $(this).addClass("turning");
+          },
+          end: function (event: any, pageObject: any, turned: boolean) {
+            $(this).removeClass("turning");
+          },
+        },
+      });
 
       // Handle responsive design
       const handleResize = () => {
@@ -144,10 +126,10 @@ export default function VirtualBook() {
         const containerWidth = container.offsetWidth - 40;
         const containerHeight = window.innerHeight - 200;
 
-        let scale = Math.min(1, containerWidth / 800, containerHeight / 600);
+        let scale = Math.min(1, containerWidth / 1200, containerHeight / 900);
         scale = Math.max(0.5, scale); // Minimum scale
 
-        $(bookRef.current).turn("size", 800 * scale, 600 * scale);
+        $(bookRef.current).turn("size", 1200 * scale, 900 * scale);
       };
 
       // Initial resize and add listener
@@ -249,15 +231,15 @@ export default function VirtualBook() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full mx-auto">
       {/* Book Container */}
-      <div className="flex justify-center mb-8 px-4">
+      <div className="flex justify-center mb-4">
         <div className="book-wrapper relative">
           {/* Notebook binding/spine */}
           <div className="absolute left-1/2 top-0 w-8 h-full bg-gradient-to-r from-stone-600 via-stone-500 to-stone-600 transform -translate-x-1/2 rounded-sm shadow-lg z-0 opacity-80">
             {/* Spiral binding holes */}
             <div className="absolute left-1/2 transform -translate-x-1/2 top-8 space-y-8">
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 10 }).map((_, i) => (
                 <div
                   key={i}
                   className="w-2 h-2 bg-stone-800 rounded-full opacity-60"
@@ -271,10 +253,10 @@ export default function VirtualBook() {
             ref={bookRef}
             className="book relative z-10 bg-white shadow-2xl"
             style={{
-              width: "800px",
-              height: "600px",
-              maxWidth: "90vw",
-              maxHeight: "70vh",
+              width: "1200px",
+              height: "900px",
+              maxWidth: "98vw",
+              maxHeight: "90vh",
             }}
           >
             {/* Front Cover */}
@@ -291,10 +273,10 @@ export default function VirtualBook() {
                 <div className="text-center z-10 space-y-6">
                   <div className="text-6xl mb-6">📔</div>
                   <h1 className="text-4xl md:text-5xl font-bold text-stone-800 mb-4 font-handwriting">
-                    My Gift Book
+                    Something I Wrote
                   </h1>
                   <p className="text-xl text-stone-600 font-handwriting">
-                    For Someone Special
+                    For Jadoo
                   </p>
                   <div className="w-24 h-px bg-stone-400 mx-auto mt-8"></div>
                 </div>
@@ -319,12 +301,12 @@ export default function VirtualBook() {
                 </div>
 
                 <div className="text-center z-10 space-y-6">
-                  <div className="text-6xl mb-6">💝</div>
+                  <div className="text-6xl mb-6">🫡</div>
                   <h2 className="text-3xl font-bold text-stone-800 mb-4 font-handwriting">
-                    Made with Love
+                    End credits bcccc
                   </h2>
                   <p className="text-lg text-stone-600 font-handwriting">
-                    Thank you for being amazing
+                    Thank you for being amazing😊
                   </p>
                   <div className="w-24 h-px bg-stone-400 mx-auto mt-8"></div>
                 </div>
@@ -335,11 +317,11 @@ export default function VirtualBook() {
       </div>
 
       {/* Navigation Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-2">
         <div className="flex items-center gap-3">
           <Button
             onClick={prevPage}
-            disabled={currentPage <= 1 || isFlipping || totalPages === 0}
+            disabled={currentPage <= 1 || isFlipping}
             variant="outline"
             size="lg"
             className="bg-white/90 hover:bg-white border-stone-300 text-stone-700 shadow-md disabled:opacity-50"
@@ -350,13 +332,13 @@ export default function VirtualBook() {
 
           <div className="flex items-center gap-2 px-4 py-2 bg-white/90 rounded-lg border border-stone-300 shadow-sm">
             <span className="text-sm text-stone-600 font-medium">
-              Page {currentPage} of {totalPages || '...'}
+              Page {currentPage} of {totalPages}
             </span>
           </div>
 
           <Button
             onClick={nextPage}
-            disabled={currentPage >= totalPages || isFlipping || totalPages === 0}
+            disabled={currentPage >= totalPages || isFlipping}
             variant="outline"
             size="lg"
             className="bg-white/90 hover:bg-white border-stone-300 text-stone-700 shadow-md disabled:opacity-50"
@@ -440,7 +422,7 @@ function BookPageComponent({
       <div className="h-full p-8 flex flex-col justify-center relative">
         {/* Notebook lines */}
         <div className="absolute inset-0 pointer-events-none opacity-15">
-          {Array.from({ length: 24 }).map((_, i) => (
+          {Array.from({ length: 36 }).map((_, i) => (
             <div
               key={i}
               className="absolute w-full h-px bg-blue-300"
